@@ -94,6 +94,35 @@ class Vector3
 
             return new Vector3(x, y, z);
         }
+
+        static Vector3 Subtract(Vector3 v1, Vector3 v2)
+        {
+            Vector3 out = new Vector3
+                    (
+                    v1.x-v2.x,
+                    v1.y-v2.y,
+                    v1.z-v2.z
+                     );
+
+            return out;
+        }
+        static Vector3 CrossProduct(Vector3 v1,Vector3 v2)
+        {
+            Vector3 v = new Vector3(0.0f,0.0f,0.0f);
+            v.x = v1.y * v2.z - v1.z * v2.y;
+            v.y = v1.z * v2.x - v1.x * v2.z;
+            v.z = v1.x * v2.y - v1.y * v2.x;
+            return v;
+        }
+        static float DotProduct(Vector3 a,Vector3 b)
+        {
+            float	out =
+            a.x * (b.x) +
+            a.y * (b.y) +
+            a.z * (b.z);
+            return out;
+        }
+
     }
 class Vector2
 {
@@ -213,10 +242,59 @@ class Vector2
 
 class GraphicsMath
 {
-    //public static Vector3 rayIntersectsTri(Vector3 origin,Vector3 directionVector,Vector3[] tri)//returns the hit point if exists, returns null if it does not
-    //{
+    public static Vector3 rayIntersectsTri(Vector3 origin,Vector3 directionVector,Vector3[] tri)//returns the hit point if exists, returns null if it does not
+    {
+        //MOLLER TRUMBORE ALGORITHM
+        final double moe = 0.0000001; //margin of error
+        Vector3 edge1 = new Vector3(0.0f,0.0f,0.0f);
+        Vector3 edge2 = new Vector3(0.0f,0.0f,0.0f);
 
-    //}
+        Vector3 dirEdgeCrossProd =  new Vector3(0.0f,0.0f,0.0f);
+        Vector3 posDif =  new Vector3(0.0f,0.0f,0.0f);
+        Vector3 posDifCross =  new Vector3(0.0f,0.0f,0.0f);
+
+        double dotProd,dotProd2,u,v;
+
+        edge1 = Vector3.Subtract(tri[1],tri[0]);// edge1.sub(vertex1, vertex0);
+        edge2 = Vector3.Subtract(tri[2],tri[0]);
+
+        dirEdgeCrossProd = Vector3.CrossProduct(directionVector,edge2);
+        dotProd = Vector3.DotProduct(edge1,dirEdgeCrossProd);
+
+        if (dotProd > -moe && dotProd < moe)
+        {
+            return null; //ray parallel to tri
+        }
+
+        dotProd2 = 1.0 / dotProd;
+        posDif = Vector3.Subtract(origin, tri[0]);
+        u = dotProd2 * (Vector3.DotProduct(posDif,dirEdgeCrossProd));
+
+        if (u < 0.0 || u > 1.0)
+        {
+            return null;
+        }
+
+        posDifCross = Vector3.CrossProduct(posDif,edge1);
+        v = dotProd2 * Vector3.DotProduct(directionVector,posDifCross);
+
+        if (v < 0.0 || u + v > 1.0) {
+            return  null;
+        }
+
+        //FIND INTERSECTION POINT
+        Vector3 out ;
+        double t = dotProd2 * Vector3.DotProduct(edge2,posDifCross);
+        if (t > moe) // ray intersection
+        {
+            out = directionVector.multiply((float)t).add(origin);//.scaleAdd(t, rayVector, rayOrigin);
+            return out;
+        }
+        else // This means that there is a line intersection but not a ray intersection.
+        {
+            return null;
+        }
+    }
 }
 /*
 public class MollerTrumbore {
