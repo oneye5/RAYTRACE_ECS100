@@ -2,7 +2,6 @@ import ecs100.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.nio.file.Path;
 import java.util.Scanner;
 
 public class FileLoader
@@ -16,7 +15,7 @@ public class FileLoader
         v - vert {v 1.0000 1.0000 -1.00000}
         vn - norm {vn 0.0 1.0 -1.0}
         o - obj name {o cube}
-        f - face vertex index {f 1/2/3 1/2/3 1/2/3} vertex index/texture index/normal index
+        f - face vertex index {f 1/2/3 1/2/3 1/2/3} vertex index/uv index/normal index
         vp - free form {vp 1 1 1}
         vt - uvs {vt 1,0}
         # - comment {#comment wooohoo}
@@ -82,17 +81,17 @@ public class FileLoader
                     String[] splitArg2 = arg2.split("/");
                     String[] splitArg3 = arg3.split("/");
 
-                    out.FaceVerticesIndex.add(Integer.valueOf(splitArg1[0]));
-                    out.FaceVerticesIndex.add(Integer.valueOf(splitArg1[1]));
-                    out.FaceVerticesIndex.add(Integer.valueOf(splitArg1[2]));
+                    out.FaceVerticesIndex.add(Integer.valueOf(splitArg1[0]) -1);
+                    out.FaceVerticesIndex.add(Integer.valueOf(splitArg2[0]) -1);
+                    out.FaceVerticesIndex.add(Integer.valueOf(splitArg3[0]) -1);
 
-                    out.FaceTextureIndex.add(Integer.valueOf(splitArg1[0]));
-                    out.FaceTextureIndex.add(Integer.valueOf(splitArg1[1]));
-                    out.FaceTextureIndex.add(Integer.valueOf(splitArg1[2]));
+                    out.FaceUvIndex.add(Integer.valueOf(splitArg1[1]) -1);
+                    out.FaceUvIndex.add(Integer.valueOf(splitArg2[1]) -1);
+                    out.FaceUvIndex.add(Integer.valueOf(splitArg3[1]) -1);
 
-                    out.FaceNormalIndex.add(Integer.valueOf(splitArg1[0]));
-                    out.FaceNormalIndex.add(Integer.valueOf(splitArg1[1]));
-                    out.FaceNormalIndex.add(Integer.valueOf(splitArg1[2]));
+                    out.FaceNormalIndex.add(Integer.valueOf(splitArg3[2]) -1);
+                    out.FaceNormalIndex.add(Integer.valueOf(splitArg3[2]) -1);
+                    out.FaceNormalIndex.add(Integer.valueOf(splitArg3[2]) -1);
                     break;
                 }
                 case "vp":

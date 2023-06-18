@@ -1,7 +1,6 @@
 import ecs100.UI;
 
 import java.util.ArrayList;
-import java.util.Vector;
 
 class Vector3
     {
@@ -78,7 +77,6 @@ class Vector3
 
         static Vector3 rayFromAngle(Float pitch, Float yaw)
         {
-            UI.println("in = " + pitch + " " + yaw);
             Float x;
             Float y;
             Float z;
@@ -225,7 +223,7 @@ class Vector2
 
 
        public ArrayList<Integer> FaceVerticesIndex;
-        public ArrayList<Integer> FaceTextureIndex;
+        public ArrayList<Integer> FaceUvIndex;
         public ArrayList<Integer> FaceNormalIndex;
 
         public Mesh()
@@ -234,7 +232,7 @@ class Vector2
             Normals = new ArrayList<>();
             UV = new ArrayList<>();
             FaceVerticesIndex = new ArrayList<>();
-            FaceTextureIndex = new ArrayList<>();
+            FaceUvIndex = new ArrayList<>();
             FaceNormalIndex = new ArrayList<>();
         }
     }
@@ -294,6 +292,12 @@ class GraphicsMath
         {
             return null;
         }
+    }
+
+    public static float distance(Vector3 a,Vector3 b)
+    {
+        var x = a.subtract(b);
+        return (float)Math.sqrt((x.x * x.x) + (x.y * x.y) + (x.z * x.z));
     }
 }
 /*

@@ -1,17 +1,18 @@
 import ecs100.*;
 
+import java.awt.*;
 import java.util.ArrayList;
 
 public class Graphics
 {
     public static final Integer xRes = 256;
     public static final Integer yRes = 256;
-    public static final float fovX = 90;
+    public static final float fovX = 60;
     public static float fovY;
     public static float aspectRatio;
-    public static float yaw;
-    public static float pitch;
-    public static Vector3 camPos = new Vector3(0.0f,0.0f,0.f);
+    public static float yaw = 0;
+    public static float pitch = 0;
+    public static Vector3 camPos = new Vector3(0.0f,6.0f,10.f);
 
     public static ArrayList<Mesh> geometry = new ArrayList<>();
 
@@ -29,7 +30,10 @@ public class Graphics
     {
         yaw++;
         pitch++;
-
+        camPos.z--;
+        UI.println(camPos.z);
+        UI.clearGraphics();
+        UI.drawRect(0.0,0.0,xRes,yRes);
 
         var v = Vector3.rayFromAngle(pitch,yaw);
 
@@ -53,38 +57,56 @@ public class Graphics
                 pitch -= fovY/2.0;
                 yaw -= fovX/2.0;
 
-                var angle = Vector2.clipRot(pitch,yaw);
 
-                var directionVector = Vector3.rayFromAngle(angle.x,angle.y);
-                fireRay(directionVector,camPos);
+
+                var angle = new Vector2(pitch,yaw);
                 //calculate angle vector for ray in normal form
+                var directionVector = Vector3.rayFromAngle(angle.x,angle.y);
+                var result = fireRay(directionVector,camPos);
+
+                if (result == null)
+                    continue;
+
+                var dist = GraphicsMath.distance(camPos,result);
+                UI.setColor(new Color(dist,0,0));
+                UI.fillRect(x,y,1,1);
+
 
             }
         }
+        UI.println("end render");
     }
-    public static void fireRay(Vector3 angleVector,Vector3 pos)
+    public static Vector3 fireRay(Vector3 angleVector,Vector3 pos)
     {
         Mesh m = geometry.get(0);
 
-        for (int i = 0; i < m.FaceVerticesIndex.size();i += 3)
+        for (int i = 0; i < m.FaceVerticesIndex.size()-3;i++)
         {
             Integer vIndex0 = m.FaceVerticesIndex.get(i);
-            Integer vIndex1 = m.FaceVerticesIndex.get(i+1);
-            Integer vIndex2 = m.FaceVerticesIndex.get(i+2);
-
             Integer nIndex0 = m.FaceNormalIndex.get(i);
-            Integer nIndex1 = m.FaceNormalIndex.get(i+1);
-            Integer nIndex2 = m.FaceNormalIndex.get(i+2);
+            Integer uvIndex0 = m.FaceUvIndex.get(i);
 
-            Integer tIndex0 = m.FaceTextureIndex.get(i);
-            Integer tIndex1 = m.FaceTextureIndex.get(i+1);
-            Integer tIndex2 = m.FaceTextureIndex.get(i+2);
+            i++;
+            Integer uvIndex1 = m.FaceUvIndex.get(i);
+            Integer nIndex1 = m.FaceNormalIndex.get(i);
+            Integer vIndex1 = m.FaceVerticesIndex.get(i);
 
-
+            i++;
+            Integer vIndex2 = m.FaceVerticesIndex.get(i);
+            Integer nIndex2 = m.FaceNormalIndex.get(i);
+            Integer uvIndex2 = m.FaceUvIndex.get(i);
 
             Vector3[] triNorms = {m.Normals.get(nIndex0),m.Normals.get(nIndex1),m.Normals.get(nIndex2)};
             Vector3[] triVerts = {m.Vertices.get(vIndex0),m.Vertices.get(vIndex1),m.Vertices.get(vIndex2)};
+            Vector2[] triUv = {m.UV.get(uvIndex0),m.UV.get(uvIndex1),m.UV.get(uvIndex2)};
 
+            var result = GraphicsMath.rayIntersectsTri(angleVector,pos,triVerts);
+            if (result == null)
+                continue;
+
+
+            return result;
         }
+        return null;
     }
 }
