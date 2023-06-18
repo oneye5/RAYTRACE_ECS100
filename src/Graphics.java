@@ -11,7 +11,7 @@ public class Graphics
     public static float fovY;
     public static float aspectRatio;
     public static float yaw = 0;
-    public static float pitch = 0;
+    public static float pitch = 90;
     public static Vector3 camPos = new Vector3(0.0f,6.0f,10.f);
 
     public static ArrayList<Mesh> geometry = new ArrayList<>();
@@ -28,8 +28,8 @@ public class Graphics
     }
     public static void render()
     {
-        yaw++;
-        pitch++;
+        //yaw++;
+        //pitch++;
         camPos.z--;
         UI.println(camPos.z);
         UI.clearGraphics();
@@ -61,22 +61,30 @@ public class Graphics
 
                 var angle = new Vector2(pitch,yaw);
                 //calculate angle vector for ray in normal form
+
                 var directionVector = Vector3.rayFromAngle(angle.x,angle.y);
                 var result = fireRay(directionVector,camPos);
 
                 if (result == null)
                     continue;
 
-                var dist = GraphicsMath.distance(camPos,result);
-                UI.setColor(new Color(dist,0,0));
+                float r,g,b;
+                r = result.normals[0].x * 0.5f;
+                r += 0.5;
+                g = result.normals[0].y * 0.5f;
+                g += 0.5;
+                b = result.normals[0].z * 0.5f;
+                b += 0.5;
+
+                Color col = new Color(r,g,b);
+
+                UI.setColor(col);
                 UI.fillRect(x,y,1,1);
-
-
             }
         }
         UI.println("end render");
     }
-    public static Vector3 fireRay(Vector3 angleVector,Vector3 pos)
+    public static rayHit fireRay(Vector3 angleVector,Vector3 pos)
     {
         Mesh m = geometry.get(0);
 
@@ -104,8 +112,12 @@ public class Graphics
             if (result == null)
                 continue;
 
-
-            return result;
+            var out = new rayHit();
+            out.normals = triNorms;
+            out.uvs = triUv;
+            out.vertices = triVerts;
+            out.hitPosition = result;
+            return out;
         }
         return null;
     }

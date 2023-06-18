@@ -1,5 +1,3 @@
-import ecs100.UI;
-
 import java.util.ArrayList;
 
 class Vector3
@@ -237,7 +235,15 @@ class Vector2
         }
     }
 
+class rayHit
+{
+    Vector3[] normals;
+    Vector3[] vertices;
+    Vector2[] uvs;
 
+    Vector3 hitPosition;
+
+}
 class GraphicsMath
 {
     public static Vector3 rayIntersectsTri(Vector3 origin,Vector3 directionVector,Vector3[] tri)//returns the hit point if exists, returns null if it does not
