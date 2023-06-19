@@ -1,3 +1,5 @@
+import ecs100.UI;
+
 import java.util.ArrayList;
 
 class Vector3
@@ -81,12 +83,13 @@ class Vector3
 
             Float radPitch = (float) Math.toRadians(pitch);
             Float radYaw = (float) Math.toRadians(yaw);
+            //UI.print("pitch = " + radPitch);
+            //UI.print("yaw = " + radYaw);
 
 
-
-            x = (float) (Math.cos(radYaw) * (Math.cos(radPitch)));
+            x = (float) (Math.sin(radYaw) * (Math.cos(radPitch)));
             y = (float) Math.sin(radPitch);
-            z = (float) (Math.sin(radYaw) * (Math.cos(radPitch)));
+            z = (float) (Math.cos(radYaw) * (Math.cos(radPitch)));
 
             return new Vector3(x, y, z);
         }
@@ -248,14 +251,18 @@ class GraphicsMath
 {
     public static Vector3 rayIntersectsTri(Vector3 origin,Vector3 directionVector,Vector3[] tri)//returns the hit point if exists, returns null if it does not
     {
+        //tri[0] = tri[0].add(origin);
+       // tri[1] = tri[1].add(origin);
+        //tri[2] = tri[2].add(origin);
+
         //MOLLER TRUMBORE ALGORITHM
         final double moe = 0.0000001; //margin of error
-        Vector3 edge1 = new Vector3(0.0f,0.0f,0.0f);
-        Vector3 edge2 = new Vector3(0.0f,0.0f,0.0f);
+        Vector3 edge1;
+        Vector3 edge2;
 
-        Vector3 dirEdgeCrossProd =  new Vector3(0.0f,0.0f,0.0f);
-        Vector3 posDif =  new Vector3(0.0f,0.0f,0.0f);
-        Vector3 posDifCross =  new Vector3(0.0f,0.0f,0.0f);
+        Vector3 dirEdgeCrossProd;
+        Vector3 posDif;
+        Vector3 posDifCross;
 
         double dotProd,dotProd2,u,v;
 
