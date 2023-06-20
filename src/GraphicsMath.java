@@ -1,7 +1,36 @@
 import ecs100.UI;
 
+import java.awt.*;
 import java.util.ArrayList;
+import java.util.Vector;
+class Scene
+{
+    ArrayList<pointLight> pLights;
+    dirLight dLight;
+    ArrayList<Mesh> geometry;
+    ArrayList<Material> materials;
+}
 
+class dirLight
+{
+    Vector3 direction;
+    float lumens;
+    Color col;
+}
+class pointLight
+{
+    Vector3 pos;
+    Color col;
+    float lumens;
+    
+}
+class Material
+{
+    float smoothness;
+    float metalic;
+    Color diffuse;
+    //opacity, normals,emission
+}
 class Vector3
     {
         public float x;
@@ -69,7 +98,11 @@ class Vector3
             return out;
         }
 
-
+        static Vector3 normalize(Vector3 x)
+        {
+            float mag = (float)Math.sqrt((x.x * x.x)+(x.y * x.y) +( x.z * x.z));
+            return x.divide(mag);
+        }
 
 
 
@@ -120,6 +153,11 @@ class Vector3
             a.y * (b.y) +
             a.z * (b.z);
             return out;
+        }
+        static Vector3 dirVectorBetween(Vector3 p1,Vector3 p2)
+        {
+            float magnitude = GraphicsMath.distance(p1,p2);
+            return p2.subtract(p1).divide(magnitude);
         }
 
     }
@@ -226,6 +264,7 @@ class Vector2
        public ArrayList<Integer> FaceVerticesIndex;
         public ArrayList<Integer> FaceUvIndex;
         public ArrayList<Integer> FaceNormalIndex;
+        int materialIndex;
 
         public Mesh()
         {
@@ -243,7 +282,7 @@ class rayHit
     Vector3[] normals;
     Vector3[] vertices;
     Vector2[] uvs;
-
+    int meshIndex;
     Vector3 hitPosition;
 
 }
@@ -303,65 +342,42 @@ class GraphicsMath
         }
     }
 
+
     public static float distance(Vector3 a,Vector3 b)
     {
         var x = a.subtract(b);
         return (float)Math.sqrt((x.x * x.x) + (x.y * x.y) + (x.z * x.z));
     }
-}
-/*
-public class MollerTrumbore {
+    public static Vector3 reflectionDir(Vector3 primaryRayDir,Vector3 surfaceNormal,float smoothness)
+    {
+        float dotProd = Vector3.DotProduct(primaryRayDir,surfaceNormal);
+        Vector3 outDir = new Vector3(0.0f,0.0f,0.0f);
 
-    private static final double EPSILON = 0.0000001;
+        outDir.x = primaryRayDir.x - 2 * dotProd * surfaceNormal.x;
+        outDir.y = primaryRayDir.y - 2 * dotProd * surfaceNormal.y;
+        outDir.z = primaryRayDir.z - 2 * dotProd * surfaceNormal.z;
 
-    public static boolean rayIntersectsTriangle(Point3d rayOrigin,
-                                                Vector3d rayVector,
-                                                Triangle inTriangle,
-                                                Point3d outIntersectionPoint) {
-        Point3d vertex0 = inTriangle.getVertex0();
-        Point3d vertex1 = inTriangle.getVertex1();
-        Point3d vertex2 = inTriangle.getVertex2();
-        Vector3d edge1 = new Vector3d();
-        Vector3d edge2 = new Vector3d();
-        Vector3d h = new Vector3d();
-        Vector3d s = new Vector3d();
-        Vector3d q = new Vector3d();
-        double a, f, u, v;
-        edge1.sub(vertex1, vertex0);
-        edge2.sub(vertex2, vertex0);
-        h.cross(rayVector, edge2);
-        a = edge1.dot(h);
-
-        if (a > -EPSILON && a < EPSILON) {
-            return false;    // This ray is parallel to this triangle.
-        }
-
-        f = 1.0 / a;
-        s.sub(rayOrigin, vertex0);
-        u = f * (s.dot(h));
-
-        if (u < 0.0 || u > 1.0) {
-            return false;
-        }
-
-        q.cross(s, edge1);
-        v = f * rayVector.dot(q);
-
-        if (v < 0.0 || u + v > 1.0) {
-            return false;
-        }
-
-        // At this stage we can compute t to find out where the intersection point is on the line.
-        double t = f * edge2.dot(q);
-        if (t > EPSILON) // ray intersection
-        {
-            outIntersectionPoint.set(0.0, 0.0, 0.0);
-            outIntersectionPoint.scaleAdd(t, rayVector, rayOrigin);
-            return true;
-        } else // This means that there is a line intersection but not a ray intersection.
-        {
-            return false;
-        }
+        return Vector3.normalize(outDir);
     }
 }
+/*
+public static Vector<Double> calculateReflectionDirection(Vector<Double> incidentVector, Vector<Double> surfaceNormal) {
+        // Ensure that the incident vector and surface normal are normalized
+        normalizeVector(incidentVector);
+        normalizeVector(surfaceNormal);
+
+        // Calculate the dot product between incident vector and surface normal
+        double dotProduct = dotProduct(incidentVector, surfaceNormal);
+
+        // Calculate the reflection direction vector
+        Vector<Double> reflectionDirection = new Vector<>(3);
+        reflectionDirection.add(incidentVector.get(0) - 2 * dotProduct * surfaceNormal.get(0));
+        reflectionDirection.add(incidentVector.get(1) - 2 * dotProduct * surfaceNormal.get(1));
+        reflectionDirection.add(incidentVector.get(2) - 2 * dotProduct * surfaceNormal.get(2));
+
+        // Normalize the reflection direction vector
+        normalizeVector(reflectionDirection);
+
+        return reflectionDirection;
+    }
  */
