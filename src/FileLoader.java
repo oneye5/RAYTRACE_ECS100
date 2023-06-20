@@ -42,7 +42,6 @@ public class FileLoader
         while(scanner.hasNextLine())
         {
             String line = scanner.nextLine();
-            UI.println(line);
 
             Scanner sublineScanner = new Scanner(line);
             String prefix = sublineScanner.next();

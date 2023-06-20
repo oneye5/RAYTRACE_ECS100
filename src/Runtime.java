@@ -46,6 +46,9 @@ public class Runtime
 
         UI.addButton("add fov",this::addFov);
         UI.addButton("sub fov",this::subFov);
+
+        UI.addButton("add res",this::addRes);
+        UI.addButton("sub res",this::subRes);
     }
 
     public void addX()
@@ -61,32 +64,32 @@ public class Runtime
 
     public void addY()
     {
-        Graphics.camPos.y+=5;
+        Graphics.camPos.y++;
         UI.println(Graphics.camPos.y);
     }
     public void subY()
     {
-        Graphics.camPos.y-=5;
+        Graphics.camPos.y--;
         UI.println(Graphics.camPos.y);
     }
     public void addZ()
     {
-        Graphics.camPos.z+=5;
+        Graphics.camPos.z++;
         UI.println(Graphics.camPos.z);
     }
     public void subZ()
     {
-        Graphics.camPos.z-=5;
+        Graphics.camPos.z--;
         UI.println(Graphics.camPos.z);
     }
     public void addYaw()
     {
-        Graphics.yaw++;
+        Graphics.yaw+=5;
         UI.println(Graphics.yaw);
     }
     public void addPitch()
     {
-        Graphics.pitch++;
+        Graphics.pitch+=5;
         UI.println(Graphics.pitch);
     }
     public void addFov()
@@ -99,5 +102,16 @@ public class Runtime
         Graphics.fovX--;
         UI.println(Graphics.fovX);
     }
-
+    public void addRes()
+    {
+        Graphics.xRes+=50;
+        Graphics.yRes+=50;
+        UI.println(Graphics.xRes);
+    }
+    public void subRes()
+    {
+        Graphics.xRes-=50;
+        Graphics.yRes-=50;
+        UI.println(Graphics.xRes);
+    }
 }

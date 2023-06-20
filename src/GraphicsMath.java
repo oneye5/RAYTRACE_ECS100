@@ -251,10 +251,6 @@ class GraphicsMath
 {
     public static Vector3 rayIntersectsTri(Vector3 origin,Vector3 directionVector,Vector3[] tri)//returns the hit point if exists, returns null if it does not
     {
-        //tri[0] = tri[0].add(origin);
-       // tri[1] = tri[1].add(origin);
-        //tri[2] = tri[2].add(origin);
-
         //MOLLER TRUMBORE ALGORITHM
         final double moe = 0.0000001; //margin of error
         Vector3 edge1;

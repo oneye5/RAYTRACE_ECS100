@@ -2,12 +2,13 @@ import ecs100.*;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 
 public class Graphics
 {
-    public static final Integer xRes = 500;
-    public static final Integer yRes = 500;
+    public static Integer xRes = 50;
+    public static Integer yRes = 50;
     public static float fovX = 60;
     public static float fovY;
     public static float aspectRatio;
@@ -82,8 +83,11 @@ public class Graphics
     }
     public static rayHit fireRay(Vector3 angleVector,Vector3 pos)
     {
-        Mesh m = geometry.get(0);
+        int closest = 0;
+        float shortestDist = -1; //returns the closest hit, if exists
 
+        Mesh m = geometry.get(0);
+        ArrayList<rayHit> hits = new ArrayList<>();
         for (int i = 0; i < m.FaceVerticesIndex.size()-3;i++)
         {
             Integer vIndex0 = m.FaceVerticesIndex.get(i);
@@ -104,7 +108,7 @@ public class Graphics
             Vector3[] triVerts = {m.Vertices.get(vIndex0),m.Vertices.get(vIndex1),m.Vertices.get(vIndex2)};
             Vector2[] triUv = {m.UV.get(uvIndex0),m.UV.get(uvIndex1),m.UV.get(uvIndex2)};
 
-            var result = GraphicsMath.rayIntersectsTri(angleVector,pos,triVerts);
+            var result = GraphicsMath.rayIntersectsTri(pos,angleVector,triVerts);
             if (result == null)
                 continue;
 
@@ -113,8 +117,25 @@ public class Graphics
             out.uvs = triUv;
             out.vertices = triVerts;
             out.hitPosition = result;
-            return out;
+            hits.add(out);
+
+            float dist = GraphicsMath.distance(out.hitPosition,camPos); //maybe there is a better way, sqrt is expensssiiive
+            if(shortestDist == -1)
+            {
+                shortestDist = dist;
+            }
+            else
+            {
+                if(shortestDist > dist)
+                {
+                    shortestDist = dist;
+                    closest = hits.size()-1;
+                }
+            }
         }
-        return null;
+        if(hits.size() == 0)
+        return null; //no hits exist
+
+        return hits.get(closest);
     }
 }
