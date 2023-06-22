@@ -1,14 +1,13 @@
-import ecs100.UI;
-
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Vector;
+
 class Scene
 {
     ArrayList<pointLight> pLights;
     dirLight dLight;
     ArrayList<Mesh> geometry;
     ArrayList<Material> materials;
+    Vector3 skyColor;
 }
 
 class dirLight
@@ -20,7 +19,7 @@ class dirLight
 class pointLight
 {
     Vector3 pos;
-    Color col;
+    Vector3 col;
     float lumens;
     
 }
@@ -28,7 +27,7 @@ class Material
 {
     float smoothness;
     float metalic;
-    Color diffuse;
+    Color albedo;
     //opacity, normals,emission
 }
 class Vector3
@@ -48,6 +47,16 @@ class Vector3
             x = Float.valueOf(X);
             y = Float.valueOf(Y);
             z = Float.valueOf(Z);
+        }
+        public static String toStr(Vector3 in)
+        {
+            String out = "Vector3(x: ";
+            out += in.x;
+            out+= " y: ";
+            out+= in.y;
+            out += " z: ";
+            out += in.z + " )";
+            return out;
         }
         public Vector3 add(Vector3 v)
         {
@@ -284,12 +293,18 @@ class rayHit
     Vector2[] uvs;
     int meshIndex;
     Vector3 hitPosition;
-
+    Vector3 originalVector;
+    boolean hit;
+    Vector3 color;
+    Vector3 sourcePos;
 }
-class GraphicsMath
-{
-    public static Vector3 rayIntersectsTri(Vector3 origin,Vector3 directionVector,Vector3[] tri)//returns the hit point if exists, returns null if it does not
+class GraphicsMath {
+    public static Vector3 rayIntersectsTri(Vector3 origin, Vector3 directionVector, Vector3[] tri)//returns the hit point if exists, returns null if it does not
     {
+        if(origin == null)
+            origin = new Vector3(0.0f,0.0f,0.0f);
+
+
         //MOLLER TRUMBORE ALGORITHM
         final double moe = 0.0000001; //margin of error
         Vector3 edge1;
@@ -299,65 +314,122 @@ class GraphicsMath
         Vector3 posDif;
         Vector3 posDifCross;
 
-        double dotProd,dotProd2,u,v;
+        double dotProd, dotProd2, u, v;
 
-        edge1 = Vector3.Subtract(tri[1],tri[0]);// edge1.sub(vertex1, vertex0);
-        edge2 = Vector3.Subtract(tri[2],tri[0]);
+        edge1 = Vector3.Subtract(tri[1], tri[0]);// edge1.sub(vertex1, vertex0);
+        edge2 = Vector3.Subtract(tri[2], tri[0]);
 
-        dirEdgeCrossProd = Vector3.CrossProduct(directionVector,edge2);
-        dotProd = Vector3.DotProduct(edge1,dirEdgeCrossProd);
+        dirEdgeCrossProd = Vector3.CrossProduct(directionVector, edge2);
+        dotProd = Vector3.DotProduct(edge1, dirEdgeCrossProd);
 
-        if (dotProd > -moe && dotProd < moe)
-        {
+        if (dotProd > -moe && dotProd < moe) {
             return null; //ray parallel to tri
         }
 
         dotProd2 = 1.0 / dotProd;
         posDif = Vector3.Subtract(origin, tri[0]);
-        u = dotProd2 * (Vector3.DotProduct(posDif,dirEdgeCrossProd));
+        u = dotProd2 * (Vector3.DotProduct(posDif, dirEdgeCrossProd));
 
-        if (u < 0.0 || u > 1.0)
-        {
+        if (u < 0.0 || u > 1.0) {
             return null;
         }
 
-        posDifCross = Vector3.CrossProduct(posDif,edge1);
-        v = dotProd2 * Vector3.DotProduct(directionVector,posDifCross);
+        posDifCross = Vector3.CrossProduct(posDif, edge1);
+        v = dotProd2 * Vector3.DotProduct(directionVector, posDifCross);
 
         if (v < 0.0 || u + v > 1.0) {
-            return  null;
+            return null;
         }
 
         //FIND INTERSECTION POINT
-        Vector3 out ;
-        double t = dotProd2 * Vector3.DotProduct(edge2,posDifCross);
+        Vector3 out;
+        double t = dotProd2 * Vector3.DotProduct(edge2, posDifCross);
         if (t > moe) // ray intersection
         {
-            out = directionVector.multiply((float)t).add(origin);//.scaleAdd(t, rayVector, rayOrigin);
+            out = directionVector.multiply((float) t).add(origin);//.scaleAdd(t, rayVector, rayOrigin);
             return out;
-        }
-        else // This means that there is a line intersection but not a ray intersection.
+        } else // This means that there is a line intersection but not a ray intersection.
         {
             return null;
         }
     }
 
 
-    public static float distance(Vector3 a,Vector3 b)
-    {
+    public static float distance(Vector3 a, Vector3 b) {
         var x = a.subtract(b);
-        return (float)Math.sqrt((x.x * x.x) + (x.y * x.y) + (x.z * x.z));
+        return (float) Math.sqrt((x.x * x.x) + (x.y * x.y) + (x.z * x.z));
     }
-    public static Vector3 reflectionDir(Vector3 primaryRayDir,Vector3 surfaceNormal,float smoothness)
-    {
-        float dotProd = Vector3.DotProduct(primaryRayDir,surfaceNormal);
-        Vector3 outDir = new Vector3(0.0f,0.0f,0.0f);
+
+    public static Vector3 reflectionDir(Vector3 primaryRayDir, Vector3 surfaceNormal, float smoothness) {
+        float dotProd = Vector3.DotProduct(primaryRayDir, surfaceNormal);
+        Vector3 outDir = new Vector3(0.0f, 0.0f, 0.0f);
 
         outDir.x = primaryRayDir.x - 2 * dotProd * surfaceNormal.x;
         outDir.y = primaryRayDir.y - 2 * dotProd * surfaceNormal.y;
         outDir.z = primaryRayDir.z - 2 * dotProd * surfaceNormal.z;
 
-        return Vector3.normalize(outDir);
+        Vector3 rand = new Vector3(0.0f,0.0f,0.0f);
+        rand.x = (float)Math.random() - 0.5f;
+        rand.y = (float)Math.random() - 0.5f;
+        rand.z = (float)Math.random() - 0.5f;
+
+        rand = rand.multiply(1.0f - smoothness);
+
+        return Vector3.normalize(outDir.add(rand));
+    }
+    public static float clamp(float in,float min, float max)
+    {
+        float out = in;
+        if(in > max)
+            out = max;
+        if(in < min)
+            out = min;
+
+        return out;
+    }
+    public  static float toFloat(int value)
+    {
+        return (float)value/255.0f;
+    }
+    static Vector3 inLight(rayHit primaryRay, Material hitMat, pointLight pLight, Vector3 dirFromPrimary)
+    {
+        final float specularHardness = 0.5f; //final value
+
+        float distance = GraphicsMath.distance(primaryRay.hitPosition,pLight.pos);
+        float inverseSquareLaw = pLight.lumens /(distance*distance);
+
+        //calculate specular
+        float normLightDotProd = Vector3.DotProduct(dirFromPrimary,primaryRay.normals[0]);
+        if(normLightDotProd > 1)
+            normLightDotProd = 1.0f;
+        if (normLightDotProd < 0.0f)
+            normLightDotProd = 0.0f;
+
+        //diffuse light
+        float lDifR,lDifG,lDifB;
+
+        lDifR = normLightDotProd * pLight.col.x * hitMat.smoothness * inverseSquareLaw;
+        lDifG = normLightDotProd * pLight.col.y * hitMat.smoothness * inverseSquareLaw;
+        lDifB = normLightDotProd * pLight.col.z * hitMat.smoothness * inverseSquareLaw;
+
+        //get half vector
+        Vector3 halfDir = Vector3.normalize(primaryRay.originalVector.add(dirFromPrimary));
+
+        float normHalfDotProd = Vector3.DotProduct(primaryRay.normals[0],halfDir);
+        if(normHalfDotProd > 1)
+            normHalfDotProd = 1.0f;
+        if (normHalfDotProd < 0.0f)
+            normHalfDotProd = 0.0f;
+
+        float specularIntensity = (float)Math.pow(normHalfDotProd,specularHardness);
+
+        float outR,outG,outB;
+        //add all
+        outR = (lDifR * specularIntensity) + (lDifR * GraphicsMath.toFloat(hitMat.albedo.getRed()));
+        outG = (lDifG * specularIntensity) + (lDifG * GraphicsMath.toFloat(hitMat.albedo.getGreen()));
+        outB = (lDifB * specularIntensity) + (lDifB * GraphicsMath.toFloat(hitMat.albedo.getBlue()));
+        //System.out.println("r " + outR + " g " + outG + " b " + outB);
+        return new Vector3(outR,outG,outB);
     }
 }
 /*
