@@ -27,14 +27,30 @@ class Material
 {
     float smoothness;
     float metalic;
-    Color albedo;
-    //opacity, normals,emission
+    Vector3 albedo;
+    //addlater, opacity, normals,emission
 }
 class Vector3
     {
         public float x;
         public float y;
         public float z;
+        public static Vector3 subtract(Vector3 x,Vector3 v)
+        {
+            Vector3 out = new Vector3(0.0f,0.0f,0.0f);
+            out.x = x.x - v.x;
+            out.y = x.y - v.y;
+            out.z = x.z - v.z;
+            return out;
+        }
+        public static Vector3 add(Vector3 x,Vector3 v)
+        {
+            Vector3 out = new Vector3(0.0f,0.0f,0.0f);
+            out.x = x.x + v.x;
+            out.y = x.y + v.y;
+            out.z = x.z + v.z;
+            return out;
+        }
 
         public Vector3(Float X, Float Y,Float Z)
         {
@@ -393,7 +409,7 @@ class GraphicsMath {
     }
     static Vector3 inLight(rayHit primaryRay, Material hitMat, pointLight pLight, Vector3 dirFromPrimary)
     {
-        final float specularHardness = 0.5f; //final value
+        final float specularHardness = 0.15f; //final value
 
         float distance = GraphicsMath.distance(primaryRay.hitPosition,pLight.pos);
         float inverseSquareLaw = pLight.lumens /(distance*distance);
@@ -425,11 +441,35 @@ class GraphicsMath {
 
         float outR,outG,outB;
         //add all
-        outR = (lDifR * specularIntensity) + (lDifR * GraphicsMath.toFloat(hitMat.albedo.getRed()));
-        outG = (lDifG * specularIntensity) + (lDifG * GraphicsMath.toFloat(hitMat.albedo.getGreen()));
-        outB = (lDifB * specularIntensity) + (lDifB * GraphicsMath.toFloat(hitMat.albedo.getBlue()));
+        outR = (lDifR * specularIntensity) + (lDifR * hitMat.albedo.x);
+        outG = (lDifG * specularIntensity) + (lDifG * hitMat.albedo.y);
+        outB = (lDifB * specularIntensity) + (lDifB * hitMat.albedo.z);
         //System.out.println("r " + outR + " g " + outG + " b " + outB);
         return new Vector3(outR,outG,outB);
+    }
+
+    static Vector3 calculateReceivedLight(Vector3 receivingPos,Vector3 receivingNorm,Material receivingMaterial,Vector3 senderPos, Vector3 senderColor,Vector3 senderNormal,float specularHardness,Vector3 viewerPos)
+    {
+        // Calculate light direction and distance
+        Vector3 lightDirection = Vector3.normalize(Vector3.subtract(senderPos, receivingPos));
+        float distance = GraphicsMath.distance(senderPos, receivingPos);
+
+        // Calculate diffuse component
+        float NdotL = Math.max(Vector3.DotProduct(receivingNorm, lightDirection), 0.0f);
+        Vector3 diffuseColor = receivingMaterial.albedo.multiply(senderColor).multiply(NdotL).divide(distance * distance);
+
+        // Calculate specular component
+        Vector3 viewDirection = Vector3.normalize(Vector3.subtract(viewerPos, receivingPos));
+        Vector3 halfwayVector = Vector3.normalize(Vector3.add(lightDirection, viewDirection));
+        float NdotH = Math.max(Vector3.DotProduct(receivingNorm, halfwayVector), 0.0f);
+        float specularIntensity = (float) Math.pow(NdotH, specularHardness);
+        Vector3 specularColor = senderColor.multiply(specularIntensity).multiply(receivingMaterial.smoothness).divide(distance * distance);
+
+
+        // Apply material properties
+        Vector3 surfaceColor = diffuseColor.add(specularColor).multiply(receivingMaterial.albedo);
+
+        return surfaceColor;
     }
 }
 /*

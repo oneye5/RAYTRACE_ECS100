@@ -55,63 +55,75 @@ public class Runtime
     {
         Graphics.camPos.x++;
         UI.println(Graphics.camPos.x);
+        Graphics.reset = true;
     }
     public void subX()
     {
         Graphics.camPos.x--;
         UI.println(Graphics.camPos.x);
+        Graphics.reset = true;
     }
 
     public void addY()
     {
         Graphics.camPos.y++;
         UI.println(Graphics.camPos.y);
+        Graphics.reset = true;
     }
     public void subY()
     {
         Graphics.camPos.y--;
         UI.println(Graphics.camPos.y);
+        Graphics.reset = true;
     }
     public void addZ()
     {
         Graphics.camPos.z++;
         UI.println(Graphics.camPos.z);
+        Graphics.reset = true;
     }
     public void subZ()
     {
         Graphics.camPos.z--;
         UI.println(Graphics.camPos.z);
+        Graphics.reset = true;
     }
     public void addYaw()
     {
         Graphics.yaw+=5;
         UI.println(Graphics.yaw);
+        Graphics.reset = true;
     }
     public void addPitch()
     {
         Graphics.pitch+=5;
         UI.println(Graphics.pitch);
+        Graphics.reset = true;
     }
     public void addFov()
     {
         Graphics.fovX++;
         UI.println(Graphics.fovX);
+        Graphics.reset = true;
     }
     public void subFov()
     {
         Graphics.fovX--;
         UI.println(Graphics.fovX);
+        Graphics.reset = true;
     }
     public void addRes()
     {
         Graphics.xRes+=50;
         Graphics.yRes+=50;
         UI.println(Graphics.xRes);
+        Graphics.reset = true;
     }
     public void subRes()
     {
         Graphics.xRes-=50;
         Graphics.yRes-=50;
         UI.println(Graphics.xRes);
+        Graphics.reset = true;
     }
 }

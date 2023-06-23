@@ -10,16 +10,17 @@ public class Graphics
     public static float fovX = 60;
     public static float fovY;
     public static float aspectRatio;
-    public static float yaw = 0.0f;
+    public static float yaw = 185.0f;
     public static float pitch = -5.0f;
-    public static Vector3 camPos = new Vector3(-0.0f,5.0f,-15.f);
+    public static Vector3 camPos = new Vector3(0.0f, 2.0f, 1.0f);
     static Scene scene;
     public static boolean reset = false;
     public static class Settings
     {
         public static final int samplesPerPixel = 1;
-        public static final int maxBounces = 15;
+        public static final int maxBounces = 50;
         public static boolean accumulation = true;
+        public static final float specularHardness = 1.0f;
     }
     //region init
     public static void init()
@@ -32,26 +33,50 @@ public class Graphics
         aspectRatio = xRes/yRes;
         fovY = fovX * aspectRatio;
     }
-    public static void initScene()
+    public static void initScene() //pos 0.0, 2.0, 1.0 ANGLE -5.0, 185.0
     {
         scene = new Scene();
         scene.geometry = new ArrayList<>();
+
         scene.geometry.add(FileLoader.loadOBJ());
+
+        var m = FileLoader.loadOBJ();
+        m.materialIndex = 1;
+        scene.geometry.add(m);
+
+
 
         scene.pLights = new ArrayList<>();
 
         pointLight pLight = new pointLight();
-        pLight.col = new Vector3(1.0f,1.0f,1.0f);
-        pLight.lumens = 100.0f;
-        pLight.pos = new Vector3(0.0f,10.0f,-10.0f);
+        pLight.col = new Vector3(1.0f,0.1f,0.1f);
+        pLight.lumens = 500.0f;
+        pLight.pos = new Vector3(20.0f,30.0f,30.0f);
         scene.pLights.add(pLight);
 
+        pLight = new pointLight();
+        pLight.col = new Vector3(0.1f,0.1f,1.0f);
+        pLight.lumens = 500.0f;
+        pLight.pos = new Vector3(-20.0f,30.0f,30.0f);
+        scene.pLights.add(pLight);
 
         scene.materials = new ArrayList<>();
         Material material = new Material();
-        material.albedo = Color.white;
-        material.metalic = 0.5f;
-        material.smoothness = 0.5f;
+        material.albedo = new Vector3(0.6f,0.6f,0.6f);
+        material.metalic = 0.0f;
+        material.smoothness = 0.85f;
+        scene.materials.add(material);
+
+        material = new Material();
+        material.albedo = new Vector3(1.0f,1.0f,1.0f);
+        material.metalic = 1.0f;
+        material.smoothness = 0.875f;
+        scene.materials.add(material);
+
+        material = new Material();
+        material.albedo = new Vector3(1.0f,1.0f,1.0f);
+        material.metalic = 0.0f;
+        material.smoothness = 0.95f;
         scene.materials.add(material);
 
         scene.skyColor = new Vector3(0.1f,0.1f,0.1f);
@@ -229,7 +254,8 @@ public class Graphics
             }
             else //in direct light
             {
-                var lightReflect = GraphicsMath.inLight(primaryRay,primaryMat,light,ray.originalVector);
+                var lightReflect = GraphicsMath.calculateReceivedLight(primaryRay.hitPosition,primaryRay.normals[0],primaryMat,light.pos,light.col.multiply(light.lumens),ray.originalVector,Settings.specularHardness,camPos);
+              //  var lightReflect = GraphicsMath.inLight(primaryRay,primaryMat,light,ray.originalVector);
                 rgb = rgb.add(lightReflect);
             }
         }
@@ -256,7 +282,7 @@ public class Graphics
         for (int meshIndex = 0; meshIndex < scene.geometry.size();meshIndex++)
         {
             Mesh m = scene.geometry.get(meshIndex);
-            for (int i = 0; i < m.FaceVerticesIndex.size() - 3; i++) {
+            for (int i = 0; i < m.FaceVerticesIndex.size(); i++) {
                 Integer vIndex0 = m.FaceVerticesIndex.get(i);
                 Integer nIndex0 = m.FaceNormalIndex.get(i);
                 Integer uvIndex0 = m.FaceUvIndex.get(i);
@@ -286,6 +312,7 @@ public class Graphics
                 out.hitPosition = result;
                 out.originalVector = angleVector;
                 out.hit = true;
+                out.meshIndex = meshIndex;
 
                 float dist = GraphicsMath.distance(out.hitPosition, camPos); //maybe there is a better way, sqrt is expensssiiive
                 if (shortestDist == -1) {
