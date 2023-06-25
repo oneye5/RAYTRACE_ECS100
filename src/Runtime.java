@@ -1,7 +1,5 @@
 import ecs100.UI;
 
-import javax.swing.*;
-
 public class Runtime
 {
     static void Start()
@@ -49,6 +47,9 @@ public class Runtime
 
         UI.addButton("add res",this::addRes);
         UI.addButton("sub res",this::subRes);
+
+        UI.addSlider("specular hardness",0,5,this::specular);
+        UI.addSlider("max bounces",0,128,this::maxBounces);
     }
 
     public void addX()
@@ -124,6 +125,18 @@ public class Runtime
         Graphics.xRes-=50;
         Graphics.yRes-=50;
         UI.println(Graphics.xRes);
+        Graphics.reset = true;
+    }
+    public void specular(double in)
+    {
+        Graphics.Settings.specularHardness = (float)in;
+        UI.println(Graphics.Settings.specularHardness);
+        Graphics.reset = true;
+    }
+    public void maxBounces(double in)
+    {
+        Graphics.Settings.maxBounces = (int)in;
+        UI.println(Graphics.Settings.maxBounces);
         Graphics.reset = true;
     }
 }

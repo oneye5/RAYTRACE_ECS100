@@ -389,9 +389,10 @@ class GraphicsMath {
         rand.y = (float)Math.random() - 0.5f;
         rand.z = (float)Math.random() - 0.5f;
 
-        rand = rand.multiply(1.0f - smoothness);
+        if(Vector3.DotProduct(outDir,rand) < 0.0f)
+            rand = rand.multiply(-1.0f);
 
-        return Vector3.normalize(outDir.add(rand));
+        return outDir.multiply(smoothness).add( rand.multiply(1.0f - smoothness));
     }
     public static float clamp(float in,float min, float max)
     {
@@ -448,15 +449,44 @@ class GraphicsMath {
         return new Vector3(outR,outG,outB);
     }
 
-    static Vector3 calculateReceivedLight(Vector3 receivingPos,Vector3 receivingNorm,Material receivingMaterial,Vector3 senderPos, Vector3 senderColor,Vector3 senderNormal,float specularHardness,Vector3 viewerPos)
+    static Vector3 calculateReceivedLight(Vector3 receivingPos,Vector3 receivingNorm,Material receivingMaterial,Vector3 senderPos,
+                                          Vector3 senderColor,Vector3 senderNormal,float specularHardness,Vector3 viewerPos,Material senderMaterial)
+    {
+        float dist = GraphicsMath.distance(receivingPos,senderPos);
+        float distanceMultiplier = 1.0f/(dist*dist);
+
+        Vector3 dirToSender = Vector3.normalize(receivingPos.subtract(senderPos));
+
+        float receiveNorm_dirDot = Vector3.DotProduct(dirToSender,receivingNorm);
+        float sendNorm_dirDot = Vector3.DotProduct(dirToSender.multiply(-1.0f),senderNormal);
+
+        //calculate sending light
+        return null;
+
+    }
+
+}
+/*
+ static Vector3 calculateReceivedLight(Vector3 receivingPos,Vector3 receivingNorm,Material receivingMaterial,Vector3 senderPos,
+                                          Vector3 senderColor,Vector3 senderNormal,float specularHardness,Vector3 viewerPos,Material senderMaterial)
     {
         // Calculate light direction and distance
         Vector3 lightDirection = Vector3.normalize(Vector3.subtract(senderPos, receivingPos));
+        if(senderNormal == null)
+            senderNormal = lightDirection.multiply(-1.0f);
+
         float distance = GraphicsMath.distance(senderPos, receivingPos);
 
         // Calculate diffuse component
         float NdotL = Math.max(Vector3.DotProduct(receivingNorm, lightDirection), 0.0f);
-        Vector3 diffuseColor = receivingMaterial.albedo.multiply(senderColor).multiply(NdotL).divide(distance * distance);
+        float senderNormalDot = Vector3.DotProduct(lightDirection.multiply(-1.0f),senderNormal);
+
+        Vector3 diffuseColor = receivingMaterial.albedo.multiply(senderColor).multiply(NdotL).multiply(GraphicsMath.clamp(senderNormalDot,0.0f,1.0f)).divide(distance * distance);
+
+        if(senderMaterial != null)
+        {
+            diffuseColor = diffuseColor.multiply(senderMaterial.albedo).multiply(senderMaterial.smoothness);
+        }
 
         // Calculate specular component
         Vector3 viewDirection = Vector3.normalize(Vector3.subtract(viewerPos, receivingPos));
@@ -467,29 +497,9 @@ class GraphicsMath {
 
 
         // Apply material properties
+
         Vector3 surfaceColor = diffuseColor.add(specularColor).multiply(receivingMaterial.albedo);
 
         return surfaceColor;
-    }
-}
-/*
-public static Vector<Double> calculateReflectionDirection(Vector<Double> incidentVector, Vector<Double> surfaceNormal) {
-        // Ensure that the incident vector and surface normal are normalized
-        normalizeVector(incidentVector);
-        normalizeVector(surfaceNormal);
-
-        // Calculate the dot product between incident vector and surface normal
-        double dotProduct = dotProduct(incidentVector, surfaceNormal);
-
-        // Calculate the reflection direction vector
-        Vector<Double> reflectionDirection = new Vector<>(3);
-        reflectionDirection.add(incidentVector.get(0) - 2 * dotProduct * surfaceNormal.get(0));
-        reflectionDirection.add(incidentVector.get(1) - 2 * dotProduct * surfaceNormal.get(1));
-        reflectionDirection.add(incidentVector.get(2) - 2 * dotProduct * surfaceNormal.get(2));
-
-        // Normalize the reflection direction vector
-        normalizeVector(reflectionDirection);
-
-        return reflectionDirection;
     }
  */

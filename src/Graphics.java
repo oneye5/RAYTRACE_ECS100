@@ -17,10 +17,10 @@ public class Graphics
     public static boolean reset = false;
     public static class Settings
     {
-        public static final int samplesPerPixel = 1;
-        public static final int maxBounces = 50;
+        public static int samplesPerPixel = 1;
+        public static int maxBounces = 50;
         public static boolean accumulation = true;
-        public static final float specularHardness = 1.0f;
+        public static float specularHardness = 1.0f;
     }
     //region init
     public static void init()
@@ -49,28 +49,22 @@ public class Graphics
         scene.pLights = new ArrayList<>();
 
         pointLight pLight = new pointLight();
-        pLight.col = new Vector3(1.0f,0.1f,0.1f);
-        pLight.lumens = 500.0f;
+        pLight.col = new Vector3(1.0f,1.0f,1.0f);
+        pLight.lumens = 1000.0f;
         pLight.pos = new Vector3(20.0f,30.0f,30.0f);
-        scene.pLights.add(pLight);
-
-        pLight = new pointLight();
-        pLight.col = new Vector3(0.1f,0.1f,1.0f);
-        pLight.lumens = 500.0f;
-        pLight.pos = new Vector3(-20.0f,30.0f,30.0f);
         scene.pLights.add(pLight);
 
         scene.materials = new ArrayList<>();
         Material material = new Material();
-        material.albedo = new Vector3(0.6f,0.6f,0.6f);
+        material.albedo = new Vector3(1.0f,1.0f,1.0f);
         material.metalic = 0.0f;
-        material.smoothness = 0.85f;
+        material.smoothness = 0.95f;
         scene.materials.add(material);
 
         material = new Material();
-        material.albedo = new Vector3(1.0f,1.0f,1.0f);
+        material.albedo = new Vector3(0.5f,1.0f,1.0f);
         material.metalic = 1.0f;
-        material.smoothness = 0.875f;
+        material.smoothness = 0.7f;
         scene.materials.add(material);
 
         material = new Material();
@@ -199,6 +193,7 @@ public class Graphics
     public static int currentDepth = 0;
     public static rayHit calculatePrimary(Vector3 angle, Vector3 pos)
     {
+        //region setup
         if (currentDepth > Settings.maxBounces)
         {
             var out = new rayHit();
@@ -223,7 +218,7 @@ public class Graphics
         adjustedPos = adjustedPos.add(primaryRay.normals[0].multiply(0.001f));
 
 
-
+        //endregion
         //shadow rays ==================================================================================
         ArrayList<rayHit> shadowRays = new ArrayList<>();
         for(int i = 0; i < scene.pLights.size(); i++)
@@ -235,28 +230,28 @@ public class Graphics
             shadowRays.add(shadowRay);
         }
 
-        Vector3 rgb = new Vector3(0.0f,0.0f,0.0f);
+
+
+
+        Vector3 reflectedBack = new Vector3(0.0f,0.0f,0.0f);
         for (int i = 0; i < shadowRays.size();i++)
         {
             var ray = shadowRays.get(i);
             var light = scene.pLights.get(i);
-            if(ray.hit) //hit surface, IS IN SHADOW
+            if(ray.hit) //hit surface, IS IN SHADOW, treat like reflection ray
             {
-               //calculate lighting in by surface
-                var hit = calculatePrimary(ray.originalVector,ray.sourcePos);
-                pointLight fakeLight = new pointLight();
-                fakeLight.col = hit.color;
-                fakeLight.lumens = 1;
-                fakeLight.pos = hit.hitPosition;
-
-                rgb = rgb.add(hit.color);
 
             }
             else //in direct light
             {
-                var lightReflect = GraphicsMath.calculateReceivedLight(primaryRay.hitPosition,primaryRay.normals[0],primaryMat,light.pos,light.col.multiply(light.lumens),ray.originalVector,Settings.specularHardness,camPos);
-              //  var lightReflect = GraphicsMath.inLight(primaryRay,primaryMat,light,ray.originalVector);
-                rgb = rgb.add(lightReflect);
+                //region direct lighting
+                float dist = GraphicsMath.distance(primaryRay.hitPosition,light.pos);
+                Vector3 totalLight = light.col.multiply(light.lumens).multiply(1.0f/(dist*dist));
+
+                Vector3 lightReflected = totalLight.multiply(
+                        GraphicsMath.clamp(Vector3.DotProduct(primaryRay.originalVector.multiply(-1.0f),primaryRay.normals[0]),
+                                0.0f,1.0f)).
+                //endregion
             }
         }
 
@@ -264,11 +259,19 @@ public class Graphics
 
         var reflectDir = GraphicsMath.reflectionDir(angle,primaryRay.normals[0],primaryMat.smoothness);
         var reflectRay = calculatePrimary(reflectDir,adjustedPos);
-        rgb = rgb.add(reflectRay.color);
+        if(reflectRay.hit)
+        {
+            var col =   GraphicsMath.calculateReceivedLight(primaryRay.hitPosition, primaryRay.normals[0], primaryMat,
+                    reflectRay.hitPosition,reflectRay.color,reflectRay.normals[0],Settings.specularHardness,camPos,
+                    scene.materials.get(scene.geometry.get(reflectRay.meshIndex).materialIndex));
 
+            reflectedBack = reflectedBack.add(col);
+        }
+        else
+            reflectedBack = reflectedBack.add(scene.skyColor);
         // end ====================================================================================================
         var out = primaryRay;
-        out.color = rgb;
+        out.color = reflectedBack;
         return out;
     }
 
@@ -313,6 +316,7 @@ public class Graphics
                 out.originalVector = angleVector;
                 out.hit = true;
                 out.meshIndex = meshIndex;
+
 
                 float dist = GraphicsMath.distance(out.hitPosition, camPos); //maybe there is a better way, sqrt is expensssiiive
                 if (shortestDist == -1) {
