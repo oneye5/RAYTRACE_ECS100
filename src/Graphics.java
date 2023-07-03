@@ -2,27 +2,37 @@ import ecs100.*;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Random;
+import java.util.Vector;
 
 public class Graphics
 {
-    public static Integer xRes = 200;
-    public static Integer yRes = 200;
+    public static Integer xRes = 1280;
+    public static Integer yRes = 720;
     public static float fovX = 60;
     public static float fovY;
     public static float aspectRatio;
     public static float yaw = 185.0f;
     public static float pitch = -5.0f;
-    public static Vector3 camPos = new Vector3(0.0f, 2.0f, 1.0f);
+    public static Vector3 camPos = new Vector3(0.0f, 2.0f, 10.0f);
     static Scene scene;
     public static boolean reset = false;
     public static class Settings
     {
         public static int samplesPerPixel = 1;
-        public static int maxBounces = 50;
+        public static int maxBounces = 10;
         public static boolean accumulation = true;
         public static float specularHardness = 1.0f;
+
+        public static int shadowSamples = 3;
     }
     //region init
+    public static void initAspectRatio()
+    {
+        aspectRatio = (float)yRes/(float)xRes;
+        fovY = fovX * aspectRatio;
+        UI.println("aspect " + aspectRatio + " fov x " + fovX + " fov y " + fovY);
+    }
     public static void init()
     {
         UI.println("init graphics");
@@ -30,8 +40,7 @@ public class Graphics
 
         initScene();
         AccumulationData = new ArrayList<ArrayList<Vector3>>();
-        aspectRatio = xRes/yRes;
-        fovY = fovX * aspectRatio;
+        initAspectRatio();
     }
     public static void initScene() //pos 0.0, 2.0, 1.0 ANGLE -5.0, 185.0
     {
@@ -45,24 +54,24 @@ public class Graphics
         scene.geometry.add(m);
 
 
-
         scene.pLights = new ArrayList<>();
 
         pointLight pLight = new pointLight();
         pLight.col = new Vector3(1.0f,1.0f,1.0f);
-        pLight.lumens = 1000.0f;
+        pLight.lumens = 1.0f;
         pLight.pos = new Vector3(20.0f,30.0f,30.0f);
+        pLight.radius = 8.0f;
         scene.pLights.add(pLight);
 
         scene.materials = new ArrayList<>();
         Material material = new Material();
         material.albedo = new Vector3(1.0f,1.0f,1.0f);
         material.metalic = 0.0f;
-        material.smoothness = 0.95f;
+        material.smoothness = 0.5f;
         scene.materials.add(material);
 
         material = new Material();
-        material.albedo = new Vector3(0.5f,1.0f,1.0f);
+        material.albedo = new Vector3(1.0f,0.0f,0.0f);
         material.metalic = 1.0f;
         material.smoothness = 0.7f;
         scene.materials.add(material);
@@ -84,6 +93,7 @@ public class Graphics
             AccumulationData = new ArrayList<>();
             reset = false;
             UI.clearGraphics();
+            initAspectRatio();
         }
         UI.println("pos " + camPos.x + ", " + camPos.y + ", " + camPos.z + " ANGLE " + pitch + ", " + yaw);
         var testRay = Vector3.rayFromAngle(pitch,yaw);
@@ -118,14 +128,20 @@ public class Graphics
         float fovPerStepX = fovX/xRes;
         float fovPerStepY = fovY/yRes;
 
+
         rPitch = y * fovPerStepY;
         rYaw = x * fovPerStepX;
+
 
         rPitch -= fovY/2.0;
         rYaw -= fovX/2.0;
 
         rPitch += pitch;
         rYaw += yaw;
+
+       //randomness for aa
+        rPitch += fovPerStepX * Math.random()-0.5;
+        rYaw += fovPerStepY * Math.random()-0.5;
 
         //calculate angle vector for ray in normal form
         var directionVector = Vector3.rayFromAngle(rPitch,rYaw);
@@ -212,66 +228,59 @@ public class Graphics
             out.hitPosition = pos;
             return out;
         }
+
         //PRIMARY RAY HIT, NOW SEND SECCONDARY RAYS
         Material primaryMat = scene.materials.get(scene.geometry.get(primaryRay.meshIndex).materialIndex);
         Vector3 adjustedPos = primaryRay.hitPosition;
         adjustedPos = adjustedPos.add(primaryRay.normals[0].multiply(0.001f));
 
-
+        Vector3 outColor = new Vector3(0.0f,0.0f,0.0f);
         //endregion
         //shadow rays ==================================================================================
-        ArrayList<rayHit> shadowRays = new ArrayList<>();
         for(int i = 0; i < scene.pLights.size(); i++)
         {
-            var light = scene.pLights.get(i);
-            var dir = light.pos.subtract(primaryRay.hitPosition);
-
-            var shadowRay = fireRay(dir,adjustedPos);
-            shadowRays.add(shadowRay);
-        }
-
-
-
-
-        Vector3 reflectedBack = new Vector3(0.0f,0.0f,0.0f);
-        for (int i = 0; i < shadowRays.size();i++)
-        {
-            var ray = shadowRays.get(i);
-            var light = scene.pLights.get(i);
-            if(ray.hit) //hit surface, IS IN SHADOW, treat like reflection ray
+            for(int sample = 0; sample < Settings.shadowSamples; sample++)
             {
 
-            }
-            else //in direct light
-            {
-                //region direct lighting
-                float dist = GraphicsMath.distance(primaryRay.hitPosition,light.pos);
-                Vector3 totalLight = light.col.multiply(light.lumens).multiply(1.0f/(dist*dist));
+                var light = scene.pLights.get(i);
 
-                Vector3 lightReflected = totalLight.multiply(
-                        GraphicsMath.clamp(Vector3.DotProduct(primaryRay.originalVector.multiply(-1.0f),primaryRay.normals[0]),
-                                0.0f,1.0f)).
-                //endregion
+                Vector3 randomOffset = Vector3.rayFromAngle((float)Math.random()*360.0f,(float)Math.random()*360.0f);
+                randomOffset = randomOffset.multiply(light.radius);
+
+                var dir = Vector3.normalize(light.pos.add(randomOffset).subtract(primaryRay.hitPosition));
+                var shadowRay = fireRay(dir, adjustedPos);
+
+                //calculate shadow ray stuffs
+                if (shadowRay.hit) {
+                    continue;
+                } else {
+                    //calculate direct light
+
+                    var dot = Vector3.DotProduct(primaryRay.normals[0], dir);
+                    var distanceMulti = GraphicsMath.distance(primaryRay.hitPosition, light.pos);
+                    distanceMulti = 1.0f / distanceMulti * distanceMulti;
+
+                    outColor =
+                            outColor.add(
+                                    primaryMat.albedo.multiply(light.col).multiply(light.lumens).multiply(dot).multiply(distanceMulti).divide((float)Settings.shadowSamples)
+                            );
+                }
             }
         }
-
         //reflection ray ==============================================================================================
-
         var reflectDir = GraphicsMath.reflectionDir(angle,primaryRay.normals[0],primaryMat.smoothness);
         var reflectRay = calculatePrimary(reflectDir,adjustedPos);
         if(reflectRay.hit)
         {
-            var col =   GraphicsMath.calculateReceivedLight(primaryRay.hitPosition, primaryRay.normals[0], primaryMat,
-                    reflectRay.hitPosition,reflectRay.color,reflectRay.normals[0],Settings.specularHardness,camPos,
-                    scene.materials.get(scene.geometry.get(reflectRay.meshIndex).materialIndex));
-
-            reflectedBack = reflectedBack.add(col);
+        // Material mat = scene.materials.get(scene.geometry.get(reflectRay.meshIndex).materialIndex);
+           outColor = outColor.add(reflectRay.color.multiply(primaryMat.albedo).multiply(primaryMat.smoothness));
         }
         else
-            reflectedBack = reflectedBack.add(scene.skyColor);
+            outColor = outColor.add(scene.skyColor);
+
         // end ====================================================================================================
         var out = primaryRay;
-        out.color = reflectedBack;
+        out.color = outColor;
         return out;
     }
 

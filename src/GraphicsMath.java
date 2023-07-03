@@ -21,7 +21,7 @@ class pointLight
     Vector3 pos;
     Vector3 col;
     float lumens;
-    
+    float radius;
 }
 class Material
 {
@@ -132,7 +132,16 @@ class Vector3
 
 
 
-
+        static Vector3 rayFromAngleRadians(float pitch, float yaw)
+        {
+            Float x;
+            Float y;
+            Float z;
+            x = (float) (Math.sin(yaw) * (Math.cos(pitch)));
+            y = (float) Math.sin(pitch);
+            z = (float) (Math.cos(yaw) * (Math.cos(pitch)));
+            return new Vector3(x, y, z);
+        }
         static Vector3 rayFromAngle(Float pitch, Float yaw)
         {
             Float x;

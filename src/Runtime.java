@@ -138,5 +138,6 @@ public class Runtime
         Graphics.Settings.maxBounces = (int)in;
         UI.println(Graphics.Settings.maxBounces);
         Graphics.reset = true;
+
     }
 }
