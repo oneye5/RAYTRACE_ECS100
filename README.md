@@ -1,6 +1,6 @@
 # RAYTRACE_ECS100
 
-This project was made for me to better understand raytracing and java. I made it using ECS100 (my universities graphics library) for the hell of it
+This project was made for me to better understand raytracing and java. I made it using ECS100 (my universities graphics library) for the hell of it.
 As raytracing goes this is pretty crap and beyond slow, a better way would be to use dx12 or something in c++
 
 
