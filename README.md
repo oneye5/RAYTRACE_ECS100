@@ -7,12 +7,8 @@
 ![image-25](https://github.com/user-attachments/assets/98e24f2e-7d03-45ee-9170-3ea18669b1e8)
 ![image-23](https://github.com/user-attachments/assets/32508ed1-79f4-4954-9c7d-29e35e7ca9eb)
 
-
-This project was made for me to better understand raytracing and java. I made it using ECS100 (my universities graphics library) for the hell of it.
-As raytracing goes this is pretty crap and beyond slow, a better way would be to use dx12 or something in c++
-
+You will not be able to run this program due to using my universities graphics / UI library, and I do not have permission to share the library, though im sure it is publicly available on VUW's website. 
 
 3D FILE IMPORTS, 
 meshes must be triangulated, normals uv's included, one material per mesh AND MUST BE IN .OBJ format
-
-materials and settings are hard coded because im lazy and moving on from this project.
+materials and settings are hard
