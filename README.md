@@ -8,4 +8,4 @@ You will not be able to run this program due to using my universities graphics /
 
 3D FILE IMPORTS, 
 meshes must be triangulated, normals uv's included, one material per mesh AND MUST BE IN .OBJ format
-materials and settings are hard
+materials and settings are defined in the source code. 
